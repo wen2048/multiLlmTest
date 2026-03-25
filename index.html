@@ -1,0 +1,1615 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多渠道模型对话测试台</title>
+    <style>
+      :root {
+        --bg: #f5efe6;
+        --bg-strong: #efe4d4;
+        --panel: rgba(255, 251, 246, 0.88);
+        --panel-strong: #fffdf9;
+        --text: #2f2822;
+        --muted: #77675c;
+        --line: rgba(80, 58, 42, 0.12);
+        --accent: #bd5f37;
+        --accent-strong: #8f4423;
+        --accent-soft: rgba(189, 95, 55, 0.12);
+        --ok: #2e7d5a;
+        --warn: #b96517;
+        --error: #b33f34;
+        --user: #7a425f;
+        --shadow: 0 24px 60px rgba(67, 46, 33, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(189, 95, 55, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(87, 119, 146, 0.12), transparent 26%),
+          linear-gradient(180deg, #f7f1e8 0%, #ecdfcf 100%);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1380px, calc(100% - 28px));
+        margin: 20px auto;
+      }
+
+      .hero {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(255, 252, 248, 0.94), rgba(247, 236, 220, 0.88));
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-family: "STSong", "Songti SC", serif;
+      }
+
+      h1 {
+        margin-top: 14px;
+        font-size: clamp(32px, 4vw, 54px);
+        line-height: 1.08;
+      }
+
+      .hero p {
+        margin: 14px 0 0;
+        max-width: 920px;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 20px;
+        margin-top: 20px;
+        align-items: start;
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+      }
+
+      .card-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.34);
+      }
+
+      .card-title {
+        font-size: 21px;
+      }
+
+      .card-subtitle {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .card-body {
+        padding: 18px 20px 20px;
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: rgba(189, 95, 55, 0.6);
+        box-shadow: 0 0 0 4px rgba(189, 95, 55, 0.1);
+        transform: translateY(-1px);
+      }
+
+      textarea {
+        min-height: 46px;
+        resize: vertical;
+        line-height: 1.65;
+      }
+
+      .channel-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .channel-card {
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+      }
+
+      .channel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .channel-name {
+        font-size: 17px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(47, 40, 34, 0.06);
+        color: var(--muted);
+      }
+
+      .status.ready {
+        color: var(--ok);
+        background: rgba(46, 125, 90, 0.1);
+      }
+
+      .status.loading {
+        color: var(--warn);
+        background: rgba(185, 101, 23, 0.12);
+      }
+
+      .status.error {
+        color: var(--error);
+        background: rgba(179, 63, 52, 0.12);
+      }
+
+      .mini-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta-row {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 10px;
+        align-items: start;
+        font-size: 13px;
+      }
+
+      .meta-key {
+        color: var(--muted);
+      }
+
+      .meta-value {
+        word-break: break-word;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 14px 30px rgba(143, 68, 35, 0.24);
+      }
+
+      .secondary {
+        color: var(--text);
+        background: rgba(47, 40, 34, 0.08);
+      }
+
+      .toolbar-btn {
+        min-width: 88px;
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      .chat-shell {
+        display: grid;
+        gap: 18px;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .toolbar-left {
+        display: grid;
+        gap: 6px;
+      }
+
+      .toolbar-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .pill-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(47, 40, 34, 0.06);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .channel-summary {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .channel-footer {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .conversation {
+        display: grid;
+        gap: 14px;
+      }
+
+      .context-editor {
+        display: grid;
+        gap: 12px;
+      }
+
+      .editor-item {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--panel-strong);
+      }
+
+      .editor-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .editor-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .role-select {
+        width: 120px;
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+
+      .editor-textarea {
+        min-height: 46px;
+      }
+
+      .turn {
+        display: grid;
+        gap: 12px;
+      }
+
+      .message {
+        position: relative;
+        padding: 16px 18px 16px 22px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel-strong);
+        overflow: hidden;
+      }
+
+      .message::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 5px;
+      }
+
+      .message.user::before {
+        background: var(--user);
+      }
+
+      .message.assistant::before {
+        background: var(--assistant-color, var(--accent));
+      }
+
+      .message-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .message-role {
+        font-weight: 700;
+      }
+
+      .message-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(47, 40, 34, 0.06);
+        color: var(--muted);
+      }
+
+      .message-content {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.72;
+        font-size: 15px;
+      }
+
+      .reply-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .composer {
+        display: grid;
+        gap: 14px;
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .schedule-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(140px, 180px));
+        gap: 12px;
+      }
+
+      .result-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .result-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 880px;
+      }
+
+      .result-table th,
+      .result-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .result-table th {
+        background: rgba(47, 40, 34, 0.05);
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .result-repeat {
+        color: var(--error);
+        font-weight: 700;
+      }
+
+      .collapsed {
+        display: none;
+      }
+
+      .json-box {
+        width: 100%;
+        min-height: 140px;
+        resize: vertical;
+        font-family: "SFMono-Regular", "Consolas", monospace;
+        font-size: 12px;
+        line-height: 1.55;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .import-box {
+        min-height: 220px;
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .summary-item {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.62);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .empty {
+        padding: 24px;
+        border: 1px dashed rgba(80, 58, 42, 0.2);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.45);
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .app {
+          width: min(100% - 18px, 100%);
+          margin: 10px auto 18px;
+        }
+
+        .hero,
+        .card-body,
+        .card-header {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .meta-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <section class="hero">
+        <div class="eyebrow">LLM Channel Lab</div>
+        <h1>多渠道大模型对话测试台</h1>
+        <p>
+          发送同一个请求时，这个页面会按 OpenAI 兼容接口格式并行请求多个不同渠道，并把各自回复单独展示，方便横向比较效果、延迟和报错情况。有问题联系微信：xiutielu
+        </p>
+      </section>
+
+      <div class="layout">
+        <aside class="stack">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">全局配置</h2>
+              <div class="card-subtitle">未导入“上次请求 JSON”时，这里的系统提示词会作为初始上下文；导入后，以导入并在对话区编辑后的 messages 为准。temperature、max_tokens 等页面参数仍会参与请求。</div>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label for="systemPrompt">系统提示词</label>
+                  <textarea id="systemPrompt" placeholder="例如：你是一个简洁、专业的中文助手。">你是一个简洁、专业的中文助手。</textarea>
+                </div>
+                <div class="field">
+                  <label for="temperature">temperature</label>
+                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.7" />
+                </div>
+                <div class="field">
+                  <label for="maxTokens">max_tokens</label>
+                  <input id="maxTokens" type="number" min="1" step="1" value="1024" />
+                </div>
+                <div class="field">
+                  <label for="proxyUrl">代理地址</label>
+                  <input id="proxyUrl" type="text" placeholder="可选，例如：http://localhost:8787/proxy" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">导入上次请求</h2>
+              <div class="card-subtitle">把上一轮完整请求 JSON 粘贴进来，后续新消息会基于这份上下文继续发送。</div>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label for="previousPayload">上次请求 JSON</label>
+                  <textarea
+                    id="previousPayload"
+                    class="import-box"
+                    placeholder='粘贴类似 {"model":"xxx","messages":[...],"temperature":0.7} 的完整请求 JSON'
+                  ></textarea>
+                </div>
+                <div class="actions">
+                  <button class="primary" id="importPayloadBtn">导入上下文</button>
+                  <button class="secondary" id="clearPayloadBtn">清空导入</button>
+                </div>
+                <div class="summary-list" id="importSummary">
+                  <div class="summary-item">当前还没有导入任何历史请求。</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">渠道配置</h2>
+              <div class="card-subtitle">你可以填写两种格式：`https://xxx.com/v1` 或完整地址 `https://xxx.com/v1/chat/completions`。如果目标接口没有开启 CORS，浏览器环境下会被拦截。此时请在上方填写“代理地址”，让页面先请求你的代理，再由代理转发到目标渠道。</div>
+            </div>
+            <div class="card-body">
+              <div class="actions" style="margin-bottom: 14px">
+                <button class="secondary" id="addChannelBtn">新增渠道</button>
+              </div>
+              <div class="channel-list" id="channelConfigList"></div>
+            </div>
+          </section>
+        </aside>
+
+        <main class="stack">
+          <section class="card">
+            <div class="card-header">
+              <div class="toolbar">
+                <div class="toolbar-left">
+                  <h2 class="card-title">对话区</h2>
+                  <div class="card-subtitle">这里是可编辑上下文，可直接增删和修改 system、user、assistant 消息。</div>
+                </div>
+                <div class="pill-row">
+                  <div class="pill" id="turnCount">轮次 0</div>
+                  <div class="pill" id="readyCount">已配置 0 / 4</div>
+                  <button class="secondary" id="toggleConversationBtn">折叠对话区</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body chat-shell" id="conversationCardBody">
+              <div class="conversation" id="conversation">
+                <div class="empty">
+                  当前还没有可编辑上下文。<br />
+                  先导入“上次请求 JSON”，或者手动新增消息。
+                </div>
+              </div>
+              <div class="actions">
+                <button class="secondary" id="addUserBtn">新增 user</button>
+                <button class="secondary" id="addAssistantBtn">新增 assistant</button>
+                <button class="secondary" id="addSystemBtn">新增 system</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">发送与结果</h2>
+              <div class="card-subtitle">基于当前对话区内容发起请求，可设置定时重复次数。如果回复的内容和输入中的消息重复，会在表格中标红。</div>
+            </div>
+            <div class="card-body">
+              <div class="composer">
+                <div class="schedule-grid">
+                  <div class="field">
+                    <label for="intervalSeconds">每隔几秒请求一次</label>
+                    <input id="intervalSeconds" type="number" min="0" step="1" value="0" />
+                  </div>
+                  <div class="field">
+                    <label for="repeatCount">累计请求几次</label>
+                    <input id="repeatCount" type="number" min="1" step="1" value="1" />
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="primary" id="sendBtn">发起请求</button>
+                  <button class="secondary" id="exportCsvBtn">导出 CSV</button>
+                  <button class="secondary" id="clearBtn">清空结果</button>
+                </div>
+                <div class="conversation" id="resultConversation">
+                  <div class="empty">还没有发送结果。</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const channelColors = ["#bd5f37", "#2d6a8c", "#7d5f2a", "#7a425f"];
+
+      const initialChannels = [
+        { id: "channel-1", name: "渠道 1", model: "", baseUrl: "", apiKey: "" },
+        { id: "channel-2", name: "渠道 2", model: "", baseUrl: "", apiKey: "" },
+        { id: "channel-3", name: "渠道 3", model: "", baseUrl: "", apiKey: "" },
+        { id: "channel-4", name: "渠道 4", model: "", baseUrl: "", apiKey: "" }
+      ];
+
+      const state = {
+        channels: initialChannels.map((item) => ({ ...item })),
+        results: [],
+        requestLogs: [],
+        importedPayload: null,
+        isConversationCollapsed: false
+      };
+
+      let isRequesting = false;
+      let stopRequested = false;
+      let activeAbortControllers = [];
+
+      const STORAGE_KEY = "multi-channel-chat-lab-v2";
+
+      const channelConfigList = document.getElementById("channelConfigList");
+      const conversationEl = document.getElementById("conversation");
+      const resultConversationEl = document.getElementById("resultConversation");
+      const conversationCardBodyEl = document.getElementById("conversationCardBody");
+      const systemPromptEl = document.getElementById("systemPrompt");
+      const temperatureEl = document.getElementById("temperature");
+      const maxTokensEl = document.getElementById("maxTokens");
+      const proxyUrlEl = document.getElementById("proxyUrl");
+      const intervalSecondsEl = document.getElementById("intervalSeconds");
+      const repeatCountEl = document.getElementById("repeatCount");
+      const sendBtn = document.getElementById("sendBtn");
+      const exportCsvBtn = document.getElementById("exportCsvBtn");
+      const addUserBtn = document.getElementById("addUserBtn");
+      const addAssistantBtn = document.getElementById("addAssistantBtn");
+      const addSystemBtn = document.getElementById("addSystemBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const turnCountEl = document.getElementById("turnCount");
+      const readyCountEl = document.getElementById("readyCount");
+      const previousPayloadEl = document.getElementById("previousPayload");
+      const importPayloadBtn = document.getElementById("importPayloadBtn");
+      const clearPayloadBtn = document.getElementById("clearPayloadBtn");
+      const addChannelBtn = document.getElementById("addChannelBtn");
+      const importSummaryEl = document.getElementById("importSummary");
+      const toggleConversationBtn = document.getElementById("toggleConversationBtn");
+
+      const escapeHtml = (value) =>
+        String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const nowText = () =>
+        new Date().toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false
+        });
+
+      const normalizeBaseUrl = (value) => value.trim().replace(/\/+$/, "");
+
+      function getEndpoint(baseUrl) {
+        const normalized = normalizeBaseUrl(baseUrl);
+        if (!normalized) return "";
+        if (normalized.endsWith("/chat/completions")) {
+          return normalized;
+        }
+        return `${normalized}/chat/completions`;
+      }
+
+      const getConfiguredCount = () =>
+        state.channels.filter((item) => item.name.trim() && item.model.trim() && item.baseUrl.trim() && item.apiKey.trim()).length;
+
+      function updateSendButtonText() {
+        sendBtn.textContent = isRequesting ? "请求中..." : "发起请求";
+      }
+
+      function renderConversationCollapse() {
+        conversationCardBodyEl.classList.toggle("collapsed", state.isConversationCollapsed);
+        toggleConversationBtn.textContent = state.isConversationCollapsed ? "展开对话区" : "折叠对话区";
+      }
+
+      function createChannel() {
+        const nextIndex = state.channels.length + 1;
+        return {
+          id: `channel-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: `渠道 ${nextIndex}`,
+          model: "",
+          baseUrl: "",
+          apiKey: "",
+          enabled: true,
+          collapsed: false,
+          savedAt: ""
+        };
+      }
+
+      function persistState() {
+        const snapshot = {
+          channels: state.channels,
+          importedPayload: state.importedPayload,
+          previousPayloadRaw: previousPayloadEl.value,
+          systemPrompt: systemPromptEl.value,
+          temperature: temperatureEl.value,
+          maxTokens: maxTokensEl.value,
+          proxyUrl: proxyUrlEl.value,
+          intervalSeconds: intervalSecondsEl.value,
+          repeatCount: repeatCountEl.value,
+          results: state.results,
+          requestLogs: state.requestLogs,
+          isConversationCollapsed: state.isConversationCollapsed
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+      }
+
+      function hydrateState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          if (Array.isArray(saved.channels) && saved.channels.length) {
+            state.channels = saved.channels.map((item, index) => ({
+              id: item.id || `channel-restored-${index + 1}`,
+              name: item.name ?? `渠道 ${index + 1}`,
+              model: item.model ?? "",
+              baseUrl: item.baseUrl ?? "",
+              apiKey: item.apiKey ?? "",
+              enabled: typeof item.enabled === "boolean" ? item.enabled : true,
+              collapsed: Boolean(item.collapsed),
+              savedAt: item.savedAt ?? ""
+            }));
+          }
+          if (saved.importedPayload && Array.isArray(saved.importedPayload.messages)) {
+            state.importedPayload = saved.importedPayload;
+          }
+          previousPayloadEl.value = saved.previousPayloadRaw ?? "";
+          systemPromptEl.value = saved.systemPrompt ?? systemPromptEl.value;
+          temperatureEl.value = saved.temperature ?? temperatureEl.value;
+          maxTokensEl.value = saved.maxTokens ?? maxTokensEl.value;
+          proxyUrlEl.value = saved.proxyUrl ?? "";
+          intervalSecondsEl.value = saved.intervalSeconds ?? "0";
+          repeatCountEl.value = saved.repeatCount ?? "1";
+          state.results = Array.isArray(saved.results) ? saved.results : [];
+          state.requestLogs = Array.isArray(saved.requestLogs) ? saved.requestLogs : [];
+          state.isConversationCollapsed = Boolean(saved.isConversationCollapsed);
+        } catch (_) {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+
+      function getEditableMessages() {
+        if (state.importedPayload?.messages?.length) {
+          return state.importedPayload.messages;
+        }
+
+        const systemPrompt = systemPromptEl.value.trim();
+        return systemPrompt ? [{ role: "system", content: systemPrompt }] : [];
+      }
+
+      function setEditableMessages(messages) {
+        state.importedPayload = {
+          ...(state.importedPayload || {}),
+          model: state.importedPayload?.model ?? "",
+          messages,
+          temperature: state.importedPayload?.temperature,
+          top_p: state.importedPayload?.top_p,
+          frequency_penalty: state.importedPayload?.frequency_penalty,
+          presence_penalty: state.importedPayload?.presence_penalty,
+          parallel_tool_calls: state.importedPayload?.parallel_tool_calls,
+          stream: state.importedPayload?.stream,
+          reasoning_content: state.importedPayload?.reasoning_content
+        };
+      }
+
+      function updateEditableMessage(index, field, value) {
+        const messages = [...getEditableMessages()];
+        if (!messages[index]) return;
+        messages[index] = { ...messages[index], [field]: value };
+        setEditableMessages(messages);
+        persistState();
+        if (field === "role") {
+          renderImportSummary();
+        }
+      }
+
+      function addEditableMessage(role = "user", content = "") {
+        const messages = [...getEditableMessages(), { role, content }];
+        setEditableMessages(messages);
+        persistState();
+        renderImportSummary();
+        renderConversation();
+      }
+
+      function removeEditableMessage(index) {
+        const messages = [...getEditableMessages()];
+        messages.splice(index, 1);
+        setEditableMessages(messages);
+        persistState();
+        renderImportSummary();
+        renderConversation();
+      }
+
+      function moveEditableMessage(index, direction) {
+        const messages = [...getEditableMessages()];
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= messages.length) return;
+        const [item] = messages.splice(index, 1);
+        messages.splice(targetIndex, 0, item);
+        setEditableMessages(messages);
+        persistState();
+        renderImportSummary();
+        renderConversation();
+      }
+
+      function renderImportSummary() {
+        if (!state.importedPayload) {
+          importSummaryEl.innerHTML = `<div class="summary-item">当前还没有导入任何历史请求。</div>`;
+          return;
+        }
+
+        const payload = state.importedPayload;
+        const systemCount = payload.messages.filter((item) => item.role === "system").length;
+        const userCount = payload.messages.filter((item) => item.role === "user").length;
+        const assistantCount = payload.messages.filter((item) => item.role === "assistant").length;
+
+        importSummaryEl.innerHTML = `
+          <div class="summary-item">已导入历史请求，发送新消息时会先带上这份上下文。</div>
+          <div class="summary-item">历史模型：${escapeHtml(payload.model || "未提供")}</div>
+          <div class="summary-item">历史消息数：${payload.messages.length}，system ${systemCount}，user ${userCount}，assistant ${assistantCount}</div>
+          <div class="summary-item">历史参数：temperature ${payload.temperature ?? "-"}，top_p ${payload.top_p ?? "-"}，frequency_penalty ${payload.frequency_penalty ?? "-"}，presence_penalty ${payload.presence_penalty ?? "-"}</div>
+        `;
+      }
+
+      function importPayload() {
+        const raw = previousPayloadEl.value.trim();
+        if (!raw) {
+          alert("请先粘贴上一轮请求 JSON。");
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed.messages)) {
+            throw new Error("JSON 中缺少 messages 数组。");
+          }
+
+          state.importedPayload = {
+            model: parsed.model ?? "",
+            messages: parsed.messages
+              .filter((item) => item && typeof item.role === "string" && typeof item.content !== "undefined")
+              .map((item) => ({
+                role: item.role,
+                content: typeof item.content === "string" ? item.content : JSON.stringify(item.content, null, 2)
+              })),
+            temperature: parsed.temperature,
+            top_p: parsed.top_p,
+            frequency_penalty: parsed.frequency_penalty,
+            presence_penalty: parsed.presence_penalty,
+            parallel_tool_calls: parsed.parallel_tool_calls,
+            stream: parsed.stream,
+            reasoning_content: parsed.reasoning_content
+          };
+
+          if (typeof parsed.temperature !== "undefined") {
+            temperatureEl.value = parsed.temperature;
+          }
+
+          persistState();
+          renderImportSummary();
+          renderConversation();
+        } catch (error) {
+          alert(error instanceof Error ? `导入失败：${error.message}` : "导入失败，请检查 JSON 格式。");
+        }
+      }
+
+      function renderChannelConfigs() {
+        channelConfigList.innerHTML = state.channels
+          .map((channel, index) => {
+            const configured = channel.name.trim() && channel.model.trim() && channel.baseUrl.trim() && channel.apiKey.trim();
+            const summary = `${channel.name || `渠道 ${index + 1}`} · ${channel.enabled ? "开启" : "关闭"}${channel.savedAt ? ` · 已保存 ${channel.savedAt}` : ""}`;
+            if (channel.collapsed) {
+              return `
+                <section class="channel-card">
+                  <div class="channel-head">
+                    <h3 class="channel-name">${escapeHtml(channel.name || `渠道 ${index + 1}`)}</h3>
+                    <div class="editor-controls">
+                      <button class="status toolbar-btn ${channel.enabled ? (configured ? "ready" : "") : "error"}" data-toggle-channel="${channel.id}">${channel.enabled ? (configured ? "已开启" : "待填写") : "已关闭"}</button>
+                      <button class="secondary toolbar-btn" data-collapse-channel="${channel.id}">展开</button>
+                    </div>
+                  </div>
+                  <div class="channel-summary">${escapeHtml(summary)}</div>
+                </section>
+              `;
+            }
+
+            return `
+                <section class="channel-card">
+                  <div class="channel-head">
+                    <h3 class="channel-name">${escapeHtml(channel.name || `渠道 ${index + 1}`)}</h3>
+                    <div class="editor-controls">
+                      <button class="status toolbar-btn ${channel.enabled ? (configured ? "ready" : "") : "error"}" data-toggle-channel="${channel.id}">${channel.enabled ? (configured ? "已开启" : "待填写") : "已关闭"}</button>
+                      <button class="secondary toolbar-btn" data-collapse-channel="${channel.id}">折叠</button>
+                    </div>
+                  </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="name-${channel.id}">渠道名称</label>
+                    <input id="name-${channel.id}" data-channel-id="${channel.id}" data-field="name" value="${escapeHtml(channel.name)}" placeholder="例如：官方 / 中转 A / 供应商 B" />
+                  </div>
+                  <div class="field">
+                    <label for="model-${channel.id}">模型 ID</label>
+                    <input id="model-${channel.id}" data-channel-id="${channel.id}" data-field="model" value="${escapeHtml(channel.model)}" placeholder="例如：gpt-4.1 / deepseek-chat" />
+                  </div>
+                  <div class="field">
+                    <label for="base-${channel.id}">Base URL</label>
+                    <input id="base-${channel.id}" data-channel-id="${channel.id}" data-field="baseUrl" value="${escapeHtml(channel.baseUrl)}" placeholder="例如：https://api.example.com/v1" />
+                  </div>
+                  <div class="field">
+                    <label for="key-${channel.id}">API Key</label>
+                    <input id="key-${channel.id}" data-channel-id="${channel.id}" data-field="apiKey" value="${escapeHtml(channel.apiKey)}" placeholder="填写 Bearer Token 对应的 key" />
+                  </div>
+                </div>
+                <div class="channel-footer">
+                  <button class="secondary" data-save-channel="${channel.id}">保存</button>
+                  <button class="secondary" data-delete-channel="${channel.id}">删除</button>
+                </div>
+              </section>
+            `;
+          })
+          .join("");
+
+        readyCountEl.textContent = `已配置 ${getConfiguredCount()} / ${state.channels.length}`;
+        updateSendButtonText();
+
+        channelConfigList.querySelectorAll("input").forEach((input) => {
+          input.addEventListener("input", (event) => {
+            const { channelId, field } = event.target.dataset;
+            const target = state.channels.find((item) => item.id === channelId);
+            if (!target) return;
+            target[field] = event.target.value;
+            persistState();
+          });
+        });
+
+        channelConfigList.querySelectorAll("[data-delete-channel]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const channelId = event.target.dataset.deleteChannel;
+            if (state.channels.length === 1) {
+              alert("至少保留一个渠道。");
+              return;
+            }
+            state.channels = state.channels.filter((item) => item.id !== channelId);
+            persistState();
+            renderChannelConfigs();
+            renderResults();
+          });
+        });
+
+        channelConfigList.querySelectorAll("[data-toggle-channel]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const channelId = event.target.dataset.toggleChannel;
+            const channel = state.channels.find((item) => item.id === channelId);
+            if (!channel) return;
+            channel.enabled = !channel.enabled;
+            persistState();
+            renderChannelConfigs();
+          });
+        });
+
+        channelConfigList.querySelectorAll("[data-collapse-channel]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const channelId = event.target.dataset.collapseChannel;
+            const channel = state.channels.find((item) => item.id === channelId);
+            if (!channel) return;
+            channel.collapsed = !channel.collapsed;
+            persistState();
+            renderChannelConfigs();
+          });
+        });
+
+        channelConfigList.querySelectorAll("[data-save-channel]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const channelId = event.target.dataset.saveChannel;
+            const channel = state.channels.find((item) => item.id === channelId);
+            if (!channel) return;
+            channel.savedAt = nowText();
+            persistState();
+            renderChannelConfigs();
+          });
+        });
+      }
+
+      function renderConversation() {
+        const messages = getEditableMessages();
+        turnCountEl.textContent = `消息 ${messages.length}`;
+
+        if (!messages.length) {
+          const importNote = state.importedPayload
+            ? `已导入 ${state.importedPayload.messages.length} 条历史消息，新发送内容会接在这份上下文后面。`
+            : `先导入“上次请求 JSON”，或者手动新增消息。`;
+          conversationEl.innerHTML = `
+            <div class="empty">
+              当前还没有可编辑上下文。<br />
+              ${escapeHtml(importNote)}
+            </div>
+          `;
+          return;
+        }
+
+        conversationEl.innerHTML = `
+          <div class="context-editor">
+            ${messages
+              .map(
+                (message, index) => `
+                  <section class="editor-item">
+                    <div class="editor-head">
+                      <div class="editor-controls">
+                        <select class="role-select" data-msg-index="${index}" data-msg-field="role">
+                          ${["system", "user", "assistant"]
+                            .map(
+                              (role) =>
+                                `<option value="${role}" ${message.role === role ? "selected" : ""}>${role}</option>`
+                            )
+                            .join("")}
+                        </select>
+                        <div class="badge">#${index + 1}</div>
+                        <button class="secondary" data-move-up="${index}" ${index === 0 ? "disabled" : ""}>上移</button>
+                        <button class="secondary" data-move-down="${index}" ${index === messages.length - 1 ? "disabled" : ""}>下移</button>
+                      </div>
+                      <button class="secondary" data-remove-index="${index}">删除</button>
+                    </div>
+                    <textarea rows="1" class="editor-textarea" data-msg-index="${index}" data-msg-field="content">${escapeHtml(message.content)}</textarea>
+                  </section>
+                `
+              )
+              .join("")}
+          </div>
+        `;
+
+        conversationEl.querySelectorAll("textarea[data-msg-index]").forEach((element) => {
+          element.addEventListener("input", (event) => {
+            const index = Number(event.target.dataset.msgIndex);
+            updateEditableMessage(index, "content", event.target.value);
+          });
+        });
+
+        conversationEl.querySelectorAll("select[data-msg-index]").forEach((element) => {
+          element.addEventListener("change", (event) => {
+            const index = Number(event.target.dataset.msgIndex);
+            updateEditableMessage(index, "role", event.target.value);
+          });
+        });
+
+        conversationEl.querySelectorAll("[data-remove-index]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const index = Number(event.target.dataset.removeIndex);
+            removeEditableMessage(index);
+          });
+        });
+
+        conversationEl.querySelectorAll("[data-move-up]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const index = Number(event.target.dataset.moveUp);
+            moveEditableMessage(index, -1);
+          });
+        });
+
+        conversationEl.querySelectorAll("[data-move-down]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            const index = Number(event.target.dataset.moveDown);
+            moveEditableMessage(index, 1);
+          });
+        });
+
+      }
+
+      function renderResults() {
+        if (!state.requestLogs.length) {
+          resultConversationEl.innerHTML = `<div class="empty">还没有发送结果。</div>`;
+          return;
+        }
+
+        resultConversationEl.innerHTML = `
+          <div class="result-table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>批次</th>
+                  <th>轮次</th>
+                  <th>时间</th>
+                  <th>渠道</th>
+                  <th>模型</th>
+                  <th>状态</th>
+                  <th>耗时</th>
+                  <th>回复</th>
+                  <th>备注</th>
+                  <th>本次请求 JSON</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${state.requestLogs
+                  .map(
+                    (row) => `
+                      <tr>
+                        <td>${escapeHtml(row.batchLabel)}</td>
+                        <td>${escapeHtml(row.runLabel)}</td>
+                        <td>${escapeHtml(row.timestamp)}</td>
+                        <td>${escapeHtml(row.channelName)}</td>
+                        <td>${escapeHtml(row.model || "-")}</td>
+                        <td>${escapeHtml(row.status)}</td>
+                        <td>${escapeHtml(row.durationText)}</td>
+                        <td class="${row.isDuplicate ? "result-repeat" : ""}">${escapeHtml(row.content)}</td>
+                        <td>${escapeHtml(row.remarks || "-")}</td>
+                        <td><textarea class="json-box" rows="8" readonly>${escapeHtml(row.requestJson || "")}</textarea></td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function getInputMessageSet() {
+        return new Set(
+          getEditableMessages()
+            .map((item) => item.content.trim())
+            .filter(Boolean)
+        );
+      }
+
+      function exportLogsAsCsv() {
+        if (!state.requestLogs.length) {
+          alert("当前没有可导出的结果。");
+          return;
+        }
+
+        const headers = ["批次", "轮次", "时间", "渠道", "模型", "状态", "耗时", "是否标红", "回复", "备注", "本次请求JSON"];
+        const rows = state.requestLogs.map((row) => [
+          row.batchLabel,
+          row.runLabel,
+          row.timestamp,
+          row.channelName,
+          row.model || "",
+          row.status,
+          row.durationText,
+          row.isDuplicate ? "是" : "否",
+          row.isDuplicate ? `[标红] ${row.content || ""}` : row.content || "",
+          row.remarks || "",
+          row.requestJson || ""
+        ]);
+
+        const csv = [headers, ...rows]
+          .map((line) =>
+            line
+              .map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`)
+              .join(",")
+          )
+          .join("\n");
+
+        const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `multi-channel-results-${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      function buildMessages(userMessage) {
+        const messages = [];
+        getEditableMessages().forEach((item) => {
+          messages.push({ role: item.role, content: item.content });
+        });
+        if (userMessage) {
+          messages.push({ role: "user", content: userMessage });
+        }
+        return messages;
+      }
+
+      async function requestChannel(channel, userMessage) {
+        const startedAt = performance.now();
+        const abortController = new AbortController();
+        activeAbortControllers.push(abortController);
+
+        const payload = {
+          model: channel.model.trim(),
+          messages: buildMessages(userMessage),
+          temperature: Number(temperatureEl.value || state.importedPayload?.temperature || 0.7),
+          max_tokens: Number(maxTokensEl.value || 1024)
+        };
+
+        if (typeof state.importedPayload?.top_p !== "undefined") {
+          payload.top_p = state.importedPayload.top_p;
+        }
+
+        if (typeof state.importedPayload?.frequency_penalty !== "undefined") {
+          payload.frequency_penalty = state.importedPayload.frequency_penalty;
+        }
+
+        if (typeof state.importedPayload?.presence_penalty !== "undefined") {
+          payload.presence_penalty = state.importedPayload.presence_penalty;
+        }
+
+        if (typeof state.importedPayload?.parallel_tool_calls !== "undefined") {
+          payload.parallel_tool_calls = state.importedPayload.parallel_tool_calls;
+        }
+
+        if (typeof state.importedPayload?.stream !== "undefined") {
+          payload.stream = state.importedPayload.stream;
+        }
+
+        if (typeof state.importedPayload?.reasoning_content !== "undefined") {
+          payload.reasoning_content = state.importedPayload.reasoning_content;
+        }
+
+        const requestJson = JSON.stringify(payload, null, 2);
+
+        if (!channel.name.trim() || !channel.model.trim() || !channel.baseUrl.trim() || !channel.apiKey.trim()) {
+          return {
+            channelId: channel.id,
+            channelName: channel.name.trim() || "未命名渠道",
+            model: channel.model.trim(),
+            baseUrl: channel.baseUrl.trim(),
+            status: "error",
+            content: "配置不完整，请填写渠道名称、模型 ID、Base URL 和 API Key。",
+            duration: 0,
+            requestJson,
+            remarks: ""
+          };
+        }
+
+        try {
+          const proxyUrl = proxyUrlEl.value.trim();
+          const requestUrl = proxyUrl || getEndpoint(channel.baseUrl);
+          const requestInit = proxyUrl
+            ? {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  targetUrl: getEndpoint(channel.baseUrl),
+                  apiKey: channel.apiKey.trim(),
+                  payload
+                })
+              }
+            : {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${channel.apiKey.trim()}`
+                },
+                body: JSON.stringify(payload)
+              };
+
+          const response = await fetch(requestUrl, {
+            ...requestInit,
+            signal: abortController.signal
+          });
+
+          const json = await response.json().catch(() => null);
+
+          if (!response.ok) {
+            const errorText =
+              json?.error?.message ||
+              json?.message ||
+              `HTTP ${response.status} ${response.statusText || ""}`.trim();
+            throw new Error(errorText);
+          }
+
+          const content =
+            json?.choices?.[0]?.message?.content ??
+            json?.choices?.[0]?.text ??
+            json?.output_text ??
+            "接口返回成功，但没有解析到文本内容。";
+
+          const notes = [];
+          if (typeof payload.temperature !== "undefined") notes.push(`request.temperature=${payload.temperature}`);
+          if (typeof payload.top_p !== "undefined") notes.push(`request.top_p=${payload.top_p}`);
+          if (typeof payload.frequency_penalty !== "undefined") notes.push(`request.frequency_penalty=${payload.frequency_penalty}`);
+          if (typeof payload.presence_penalty !== "undefined") notes.push(`request.presence_penalty=${payload.presence_penalty}`);
+          if (typeof payload.max_tokens !== "undefined") notes.push(`request.max_tokens=${payload.max_tokens}`);
+          if (json?.usage) notes.push(`usage=${JSON.stringify(json.usage)}`);
+          if (json?.system_fingerprint) notes.push(`system_fingerprint=${json.system_fingerprint}`);
+          if (json?.id) notes.push(`id=${json.id}`);
+
+          return {
+            channelId: channel.id,
+            channelName: channel.name.trim(),
+            model: channel.model.trim(),
+            baseUrl: channel.baseUrl.trim(),
+            status: "success",
+            content: typeof content === "string" ? content : JSON.stringify(content, null, 2),
+            duration: Math.round(performance.now() - startedAt),
+            remarks: notes.join(" | "),
+            requestJson
+          };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          const errorName = error instanceof Error ? error.name : "";
+          const normalizedMessage =
+            errorName === "AbortError" || message === "The operation was aborted."
+              ? "请求已停止。"
+              : message === "signal is aborted without reason"
+                ? "请求已停止。"
+                :
+            message === "Failed to fetch" && !proxyUrlEl.value.trim()
+              ? "请求被浏览器拦截。目标接口大概率没有开启 CORS，请填写代理地址后再试。"
+              : message;
+          return {
+            channelId: channel.id,
+            channelName: channel.name.trim(),
+            model: channel.model.trim(),
+            baseUrl: channel.baseUrl.trim(),
+            status: "error",
+            content: normalizedMessage,
+            duration: Math.round(performance.now() - startedAt),
+            remarks: "",
+            requestJson
+          };
+        } finally {
+          activeAbortControllers = activeAbortControllers.filter((item) => item !== abortController);
+        }
+      }
+
+      async function handleSend() {
+        if (isRequesting) {
+          stopRequested = true;
+          activeAbortControllers.forEach((controller) => controller.abort());
+          sendBtn.textContent = "停止中...";
+          return;
+        }
+
+        const currentMessages = getEditableMessages();
+        const repeatCount = Math.max(1, Number(repeatCountEl.value || 1));
+        const intervalSeconds = Math.max(0, Number(intervalSecondsEl.value || 0));
+        const activeChannels = state.channels.filter((channel) => channel.enabled);
+
+        if (!currentMessages.length) {
+          alert("请先导入或编辑上下文。");
+          return;
+        }
+
+        if (!activeChannels.length) {
+          alert("请至少开启一个渠道。");
+          return;
+        }
+
+        isRequesting = true;
+        stopRequested = false;
+        sendBtn.disabled = false;
+        updateSendButtonText();
+
+        const effectiveMessages = getEditableMessages();
+        const summary =
+          effectiveMessages[effectiveMessages.length - 1]?.content?.slice(0, 180) ||
+          "基于当前上下文直接发送";
+        const inputMessageSet = getInputMessageSet();
+        const batchIndex = state.results.length + 1;
+
+        try {
+          for (let runIndex = 0; runIndex < repeatCount; runIndex += 1) {
+            if (stopRequested) break;
+
+            const loadingReplies = activeChannels.map((channel) => ({
+              channelId: channel.id,
+              channelName: channel.name.trim() || "未命名渠道",
+              model: channel.model.trim(),
+              baseUrl: channel.baseUrl.trim(),
+              status: "loading",
+              content: "正在请求中...",
+              duration: 0
+            }));
+
+            const turn = {
+              timestamp: nowText(),
+              summary,
+              replies: loadingReplies
+            };
+
+            state.results.push(turn);
+            persistState();
+            renderResults();
+
+            const results = await Promise.all(activeChannels.map((channel) => requestChannel(channel, "")));
+            if (stopRequested) {
+              turn.replies = results;
+              persistState();
+              renderResults();
+              break;
+            }
+            turn.replies = results;
+
+            const logRows = results.map((reply) => {
+              const normalizedContent = (reply.content || "").trim();
+              return {
+                batchLabel: `第 ${batchIndex} 批`,
+                runLabel: `第 ${runIndex + 1} 次`,
+                timestamp: turn.timestamp,
+                channelName: reply.channelName || "未命名渠道",
+                model: reply.model || "",
+                status: reply.status === "success" ? "成功" : reply.status === "error" ? "失败" : "请求中",
+                durationText: reply.duration ? `${reply.duration} ms` : "-",
+                content: reply.content || "",
+                isDuplicate: reply.status === "success" && inputMessageSet.has(normalizedContent),
+                remarks: reply.remarks || "",
+                requestJson: reply.requestJson || ""
+              };
+            });
+
+            state.requestLogs.push(...logRows);
+            persistState();
+            renderResults();
+
+            if (runIndex < repeatCount - 1 && intervalSeconds > 0) {
+              if (stopRequested) break;
+              await sleep(intervalSeconds * 1000);
+            }
+          }
+        } finally {
+          isRequesting = false;
+          stopRequested = false;
+          activeAbortControllers = [];
+          sendBtn.disabled = false;
+          updateSendButtonText();
+        }
+      }
+
+      sendBtn.addEventListener("click", handleSend);
+      exportCsvBtn.addEventListener("click", exportLogsAsCsv);
+
+      clearBtn.addEventListener("click", () => {
+        state.results = [];
+        state.requestLogs = [];
+        persistState();
+        renderResults();
+      });
+
+      importPayloadBtn.addEventListener("click", importPayload);
+
+      clearPayloadBtn.addEventListener("click", () => {
+        state.importedPayload = null;
+        previousPayloadEl.value = "";
+        persistState();
+        renderImportSummary();
+        renderConversation();
+      });
+
+      addChannelBtn.addEventListener("click", () => {
+        state.channels.push(createChannel());
+        persistState();
+        renderChannelConfigs();
+      });
+
+      toggleConversationBtn.addEventListener("click", () => {
+        state.isConversationCollapsed = !state.isConversationCollapsed;
+        persistState();
+        renderConversationCollapse();
+      });
+
+      addUserBtn.addEventListener("click", () => addEditableMessage("user", ""));
+      addAssistantBtn.addEventListener("click", () => addEditableMessage("assistant", ""));
+      addSystemBtn.addEventListener("click", () => addEditableMessage("system", ""));
+
+      [systemPromptEl, temperatureEl, maxTokensEl, proxyUrlEl, previousPayloadEl, intervalSecondsEl, repeatCountEl].forEach((element) => {
+        element.addEventListener("input", persistState);
+      });
+
+      hydrateState();
+      renderChannelConfigs();
+      renderImportSummary();
+      renderConversation();
+      renderResults();
+      updateSendButtonText();
+      renderConversationCollapse();
+    </script>
+  </body>
+</html>
