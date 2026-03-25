@@ -594,33 +594,6 @@
         <aside class="stack">
           <section class="card">
             <div class="card-header">
-              <h2 class="card-title">全局配置</h2>
-              <div class="card-subtitle">未导入“上次请求 JSON”时，这里的系统提示词会作为初始上下文；导入后，以导入并在对话区编辑后的 messages 为准。temperature、max_tokens 等页面参数仍会参与请求。</div>
-            </div>
-            <div class="card-body">
-              <div class="field-grid">
-                <div class="field">
-                  <label for="systemPrompt">系统提示词</label>
-                  <textarea id="systemPrompt" placeholder="例如：你是一个简洁、专业的中文助手。">你是一个简洁、专业的中文助手。</textarea>
-                </div>
-                <div class="field">
-                  <label for="temperature">temperature</label>
-                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.7" />
-                </div>
-                <div class="field">
-                  <label for="maxTokens">max_tokens</label>
-                  <input id="maxTokens" type="number" min="1" step="1" value="1024" />
-                </div>
-                <div class="field">
-                  <label for="proxyUrl">代理地址</label>
-                  <input id="proxyUrl" type="text" placeholder="可选，例如：http://localhost:8787/proxy" />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="card-header">
               <h2 class="card-title">导入上次请求</h2>
               <div class="card-subtitle">把上一轮完整请求 JSON 粘贴进来，后续新消息会基于这份上下文继续发送。</div>
             </div>
@@ -647,12 +620,42 @@
 
           <section class="card">
             <div class="card-header">
+              <h2 class="card-title">全局配置</h2>
+              <div class="card-subtitle">未导入“上次请求 JSON”时，这里的系统提示词会作为初始上下文；导入后，以导入并在对话区编辑后的 messages 为准。temperature、max_tokens 等页面参数仍会参与请求。</div>
+            </div>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label for="systemPrompt">系统提示词</label>
+                  <textarea id="systemPrompt" placeholder="例如：你是一个简洁、专业的中文助手。">你是一个简洁、专业的中文助手。</textarea>
+                </div>
+                <div class="field">
+                  <label for="temperature">temperature</label>
+                  <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.7" />
+                </div>
+                <div class="field">
+                  <label for="maxTokens">max_tokens</label>
+                  <input id="maxTokens" type="number" min="1" step="1" value="1024" />
+                </div>
+                <div class="field">
+                  <label for="proxyUrl">代理地址</label>
+                  <input id="proxyUrl" type="text" value="/proxy" placeholder="例如：/proxy 或 https://your-domain.vercel.app/proxy" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
               <h2 class="card-title">渠道配置</h2>
               <div class="card-subtitle">你可以填写两种格式：`https://xxx.com/v1` 或完整地址 `https://xxx.com/v1/chat/completions`。如果目标接口没有开启 CORS，浏览器环境下会被拦截。此时请在上方填写“代理地址”，让页面先请求你的代理，再由代理转发到目标渠道。</div>
             </div>
             <div class="card-body">
               <div class="actions" style="margin-bottom: 14px">
                 <button class="secondary" id="addChannelBtn">新增渠道</button>
+                <button class="secondary" id="exportChannelsBtn">导出渠道配置</button>
+                <button class="secondary" id="importChannelsBtn">导入渠道配置</button>
+                <input id="importChannelsFile" type="file" accept="application/json,.json" style="display: none" />
               </div>
               <div class="channel-list" id="channelConfigList"></div>
             </div>
@@ -767,6 +770,9 @@
       const importPayloadBtn = document.getElementById("importPayloadBtn");
       const clearPayloadBtn = document.getElementById("clearPayloadBtn");
       const addChannelBtn = document.getElementById("addChannelBtn");
+      const exportChannelsBtn = document.getElementById("exportChannelsBtn");
+      const importChannelsBtn = document.getElementById("importChannelsBtn");
+      const importChannelsFileEl = document.getElementById("importChannelsFile");
       const importSummaryEl = document.getElementById("importSummary");
       const toggleConversationBtn = document.getElementById("toggleConversationBtn");
 
@@ -824,6 +830,73 @@
           collapsed: false,
           savedAt: ""
         };
+      }
+
+      function normalizeImportedChannels(channels) {
+        return channels.map((item, index) => ({
+          id: item.id || `channel-imported-${Date.now()}-${index + 1}`,
+          name: item.name ?? `渠道 ${index + 1}`,
+          model: item.model ?? "",
+          baseUrl: item.baseUrl ?? "",
+          apiKey: item.apiKey ?? "",
+          enabled: typeof item.enabled === "boolean" ? item.enabled : true,
+          collapsed: Boolean(item.collapsed),
+          savedAt: item.savedAt ?? ""
+        }));
+      }
+
+      function exportChannelConfigs() {
+        if (!state.channels.length) {
+          alert("当前没有可导出的渠道配置。");
+          return;
+        }
+
+        const payload = {
+          version: 1,
+          exportedAt: nowText(),
+          channels: state.channels.map((channel) => ({
+            id: channel.id,
+            name: channel.name,
+            model: channel.model,
+            baseUrl: channel.baseUrl,
+            apiKey: channel.apiKey,
+            enabled: channel.enabled,
+            collapsed: channel.collapsed,
+            savedAt: channel.savedAt
+          }))
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `channel-configs-${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      async function importChannelConfigsFromFile(file) {
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          const channels = Array.isArray(parsed) ? parsed : parsed.channels;
+
+          if (!Array.isArray(channels) || !channels.length) {
+            throw new Error("文件中缺少 channels 数组。");
+          }
+
+          state.channels = normalizeImportedChannels(channels);
+          persistState();
+          renderChannelConfigs();
+        } catch (error) {
+          alert(error instanceof Error ? `导入渠道配置失败：${error.message}` : "导入渠道配置失败。");
+        } finally {
+          importChannelsFileEl.value = "";
+        }
       }
 
       function persistState() {
@@ -1008,7 +1081,7 @@
         channelConfigList.innerHTML = state.channels
           .map((channel, index) => {
             const configured = channel.name.trim() && channel.model.trim() && channel.baseUrl.trim() && channel.apiKey.trim();
-            const summary = `${channel.name || `渠道 ${index + 1}`} · ${channel.enabled ? "开启" : "关闭"}${channel.savedAt ? ` · 已保存 ${channel.savedAt}` : ""}`;
+            const summary = `${channel.enabled ? "开启" : "关闭"}${channel.savedAt ? ` · 已保存 ${channel.savedAt}` : ""}`;
             if (channel.collapsed) {
               return `
                 <section class="channel-card">
@@ -1587,6 +1660,17 @@
         state.channels.push(createChannel());
         persistState();
         renderChannelConfigs();
+      });
+
+      exportChannelsBtn.addEventListener("click", exportChannelConfigs);
+
+      importChannelsBtn.addEventListener("click", () => {
+        importChannelsFileEl.click();
+      });
+
+      importChannelsFileEl.addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        await importChannelConfigsFromFile(file);
       });
 
       toggleConversationBtn.addEventListener("click", () => {
